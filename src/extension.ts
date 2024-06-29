@@ -6,19 +6,19 @@ import { minimatch } from 'minimatch'
 
 export function activate(context: vscode.ExtensionContext) {
   let exportCommand = vscode.commands.registerCommand(
-    'vscode-export-dir2file.exportToFile',
+    'export-dir2file.exportToFile',
     exportToMarkdown
   )
   let createIgnoreCommand = vscode.commands.registerCommand(
-    'vscode-export-dir2file.createIgnore',
+    'export-dir2file.createIgnore',
     createExpIgnore
   )
   let createWhitelistCommand = vscode.commands.registerCommand(
-    'vscode-export-dir2file.createWhitelist',
+    'export-dir2file.createWhitelist',
     createExpWhitelist
   )
   let exportTabsCommand = vscode.commands.registerCommand(
-    'vscode-export-dir2file.exportTabs',
+    'export-dir2file.exportActiveTabs',
     exportActiveTabs
   )
 
@@ -156,7 +156,7 @@ async function getWhitelistRules(
       .map((pattern) => {
         // Handle directory patterns with trailing slashes
         if (pattern.endsWith('/')) {
-          return pattern + '**/*'
+          return pattern + '**'
         }
         return pattern
       })
@@ -336,22 +336,39 @@ async function exportActiveTabs() {
     rootPath,
     config.output || 'active-tabs-export.md'
   )
-  let output = ''
+
+  let output: string[] = []
 
   const activeTabs = vscode.window.tabGroups.all
     .flatMap((group) => group.tabs)
     .filter((tab) => tab.input instanceof vscode.TabInputText)
     .map((tab) => (tab.input as vscode.TabInputText).uri.fsPath)
 
-  output += '# Active Tabs Content\n\n'
+  const ignoreRules = await getIgnoreRules(rootPath, config.ignoreFile)
+
+  const includeStructure =
+    config.includeProjectStructure ??
+    (await vscode.window.showQuickPick(['Yes', 'No'], {
+      placeHolder: 'Include project structure at the top of the file?',
+    })) === 'Yes'
+
+  if (includeStructure) {
+    output.push('# Project Structure\n\n```\n')
+    output.push(await generateProjectStructure(rootPath, ignoreRules))
+    output.push('```\n\n')
+  }
+
+  output.push('# Active Tabs Content\n\n')
 
   for (const filePath of activeTabs) {
     const relativePath = path.relative(rootPath, filePath)
     const content = fs.readFileSync(filePath, 'utf8')
-    output += `## ${relativePath}\n\n\`\`\`\n${content.trimRight()}\n\`\`\`\n\n`
+    output.push(
+      `## ${relativePath}\n\n\`\`\`\n${content.trimRight()}\n\`\`\`\n\n`
+    )
   }
 
-  fs.writeFileSync(outputPath, output)
+  fs.writeFileSync(outputPath, output.join(''))
   vscode.window.showInformationMessage(`Active tabs exported to ${outputPath}`)
 }
 

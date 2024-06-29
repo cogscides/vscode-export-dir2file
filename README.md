@@ -47,7 +47,7 @@ Create a `.exportconfig.json` file in the root of your workspace to configure th
 
 ```
 out/
-dist/
+dist/**
 node_modules/
 .vscode/
 *.vsix
@@ -56,7 +56,8 @@ node_modules/
 ## Example `.exp-whitelist`
 
 ```
-src/
+src/**
+*.log
 README.md
 ```
 

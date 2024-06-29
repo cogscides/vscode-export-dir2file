@@ -1,5 +1,5 @@
 {
-  "name": "vscode-export-dir2file",
+  "name": "export-dir2file",
   "displayName": "Export Directory to File",
   "description": "Export all files in a directory to a single Markdown file with ignore and whitelist support",
   "version": "0.0.1",
@@ -14,19 +14,19 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-export-dir2file.exportToFile",
+        "command": "export-dir2file.exportToFile",
         "title": "Dir2file: Export Directory to File"
       },
       {
-        "command": "vscode-export-dir2file.createIgnore",
+        "command": "export-dir2file.createIgnore",
         "title": "Dir2file: Create/Edit ignore File"
       },
       {
-        "command": "vscode-export-dir2file.createWhitelist",
+        "command": "export-dir2file.createWhitelist",
         "title": "Dir2file: Create/Edit whitelist File"
       },
       {
-        "command": "vscode-export-dir2file.exportActiveTabs",
+        "command": "export-dir2file.exportActiveTabs",
         "title": "Dir2file: Export only active tabs"
       }
     ]
