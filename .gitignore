@@ -1,0 +1,10 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+.vscode*
+.export-ignore
+.export-whitelist
+export.md
+package-lock.json
