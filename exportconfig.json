@@ -1,7 +1,8 @@
 {
-  "output": "export.md",
+  "output": "export/export.md",
   "description": "This is the project codebase we are working on.",
-  "ignoreFile": ".exp-ignore",
-  "allowList": ".exp-whitelist",
+  "ignoreFile": "export/.exp-ignore",
+  "allowList": "export/.export-whitelist",
+  "removeComments": true,
   "includeProjectStructure": true
 }

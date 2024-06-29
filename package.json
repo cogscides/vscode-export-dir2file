@@ -1,5 +1,5 @@
 {
-  "name": "export-dir2file",
+  "name": "directory2file",
   "displayName": "Export Directory to File",
   "description": "Export all files in a directory to a single Markdown file with ignore and whitelist support",
   "version": "0.0.1",
@@ -14,22 +14,41 @@
   "contributes": {
     "commands": [
       {
-        "command": "export-dir2file.exportToFile",
+        "command": "directory2file.exportToFile",
         "title": "Dir2file: Export Directory to File"
       },
       {
-        "command": "export-dir2file.createIgnore",
+        "command": "directory2file.createIgnore",
         "title": "Dir2file: Create/Edit ignore File"
       },
       {
-        "command": "export-dir2file.createWhitelist",
+        "command": "directory2file.createWhitelist",
         "title": "Dir2file: Create/Edit whitelist File"
       },
       {
-        "command": "export-dir2file.exportActiveTabs",
+        "command": "directory2file.exportActiveTabs",
         "title": "Dir2file: Export only active tabs"
+      },
+      {
+        "command": "directory2file.openSettings",
+        "title": "Dir2file: Open Extension Settings"
       }
     ]
+  },
+  "configuration": {
+    "title": "Export Directory to File",
+    "properties": {
+      "directory2file.globalIgnoreRules": {
+        "type": "array",
+        "default": [],
+        "description": "Global ignore rules for all exports"
+      },
+      "directory2file.globalWhitelistRules": {
+        "type": "array",
+        "default": [],
+        "description": "Global whitelist rules for all exports"
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -49,6 +68,7 @@
     "@types/minimatch": "^5.1.2",
     "@types/mocha": "^10.0.6",
     "@types/node": "20.x",
+    "@types/strip-comments": "^2.0.4",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
@@ -62,6 +82,7 @@
   "dependencies": {
     "@vscode/vsce": "^2.29.0",
     "ignore": "^5.3.1",
-    "minimatch": "^9.0.5"
+    "minimatch": "^9.0.5",
+    "strip-comments": "^2.0.1"
   }
 }
