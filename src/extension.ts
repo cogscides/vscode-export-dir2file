@@ -27,15 +27,9 @@ export function activate(context: vscode.ExtensionContext) {
     openExtensionSettings
   )
 
-  console.log(
-    'Global ignore rules:',
-    vscode.workspace.getConfiguration('directory2file').get('globalIgnoreRules')
-  )
   // console.log(
-  //   'Global include rules:',
-  //   vscode.workspace
-  //     .getConfiguration('directory2file')
-  //     .get('globalIncludeRules')
+  //   'Global ignore rules:',
+  //   vscode.workspace.getConfiguration('directory2file').get('globalIgnoreRules')
   // )
 
   context.subscriptions.push(
