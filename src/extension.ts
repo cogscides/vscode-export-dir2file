@@ -5,8 +5,6 @@ import ignore from 'ignore'
 import { minimatch } from 'minimatch'
 import stripComments from 'strip-comments'
 
-// WHAT A comments
-// One Moreeeee
 export function activate(context: vscode.ExtensionContext) {
   let exportCommand = vscode.commands.registerCommand(
     'directory2file.exportToFile',
@@ -16,9 +14,9 @@ export function activate(context: vscode.ExtensionContext) {
     'directory2file.createIgnore',
     createExpIgnore
   )
-  let createWhitelistCommand = vscode.commands.registerCommand(
-    'directory2file.createWhitelist',
-    createExpWhitelist
+  let createIncludeCommand = vscode.commands.registerCommand(
+    'directory2file.createInclude',
+    createExpInclude
   )
   let exportTabsCommand = vscode.commands.registerCommand(
     'directory2file.exportActiveTabs',
@@ -33,133 +31,197 @@ export function activate(context: vscode.ExtensionContext) {
     'Global ignore rules:',
     vscode.workspace.getConfiguration('directory2file').get('globalIgnoreRules')
   )
-  console.log(
-    'Global whitelist rules:',
-    vscode.workspace
-      .getConfiguration('directory2file')
-      .get('globalWhitelistRules')
-  )
+  // console.log(
+  //   'Global include rules:',
+  //   vscode.workspace
+  //     .getConfiguration('directory2file')
+  //     .get('globalIncludeRules')
+  // )
 
   context.subscriptions.push(
     exportCommand,
     createIgnoreCommand,
-    createWhitelistCommand,
+    createIncludeCommand,
     exportTabsCommand,
     openSettingsCommand
   )
 }
 
-async function exportToMarkdown() {
-  try {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
-    if (!workspaceFolder) {
-      throw new Error('No workspace folder open')
-    }
+export async function exportToMarkdown(context: vscode.ExtensionContext) {
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Exporting directory to file',
+      cancellable: true,
+    },
+    async (progress, token) => {
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
+        if (!workspaceFolder) {
+          throw new Error('No workspace folder open')
+        }
 
-    const rootPath = workspaceFolder.uri.fsPath
-    const config = await getConfig(rootPath)
-    const outputPath = await ensureOutputPath(
-      rootPath,
-      config.output || 'export.md'
-    )
-    let output: string[] = []
+        const rootPath = workspaceFolder.uri.fsPath
+        const config = await getConfig(rootPath)
+        const outputPath = await ensureOutputPath(
+          rootPath,
+          config.output || 'export.md'
+        )
+        let output: string[] = []
 
-    const ignoreRules = await getIgnoreRules(rootPath, config.ignoreFile)
-    const whitelistRules = await getWhitelistRules(rootPath, config.allowList)
+        const ignoreRules = await getIgnoreRules(rootPath, config.ignoreFile)
+        const includeRules = await getIncludeRules(rootPath, config.includeList)
 
-    // Include project description
-    if (config.description) {
-      const descriptionPath = path.join(rootPath, config.description)
-      if (fs.existsSync(descriptionPath)) {
-        const descriptionContent = fs.readFileSync(descriptionPath, 'utf8')
-        output.push(descriptionContent + '\n\n')
-      } else {
-        output.push(config.description + '\n\n')
+        if (config.description) {
+          const descriptionPath = path.join(rootPath, config.description)
+          if (fs.existsSync(descriptionPath)) {
+            const descriptionContent = fs.readFileSync(descriptionPath, 'utf8')
+            output.push(descriptionContent + '\n\n')
+          } else {
+            output.push(config.description + '\n\n')
+          }
+        }
+
+        const includeStructure =
+          config.includeProjectStructure ??
+          (await vscode.window.showQuickPick(['Yes', 'No'], {
+            placeHolder: 'Include project structure at the top of the file?',
+          })) === 'Yes'
+
+        if (includeStructure) {
+          output.push('# Project Structure\n\n```\n')
+          output.push(
+            await generateProjectStructure(rootPath, ignoreRules, includeRules)
+          )
+          output.push('```\n\n')
+        }
+
+        output.push('# File Contents\n\n')
+
+        progress.report({ increment: 50, message: 'Processing directory...' })
+
+        if (token.isCancellationRequested) {
+          vscode.window.showInformationMessage('Export operation was cancelled')
+          return
+        }
+
+        await processDirectory(
+          rootPath,
+          rootPath,
+          ignoreRules,
+          includeRules,
+          output,
+          config.removeComments === true,
+          new Set(),
+          progress,
+          token
+        )
+
+        if (token.isCancellationRequested) {
+          vscode.window.showInformationMessage('Export operation was cancelled')
+          return
+        }
+
+        progress.report({ increment: 50, message: 'Writing output file...' })
+        fs.writeFileSync(outputPath, output.join(''))
+        vscode.window.showInformationMessage(`Files exported to ${outputPath}`)
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Error exporting files: ${error.message}`
+        )
       }
     }
-
-    const includeStructure =
-      config.includeProjectStructure ??
-      (await vscode.window.showQuickPick(['Yes', 'No'], {
-        placeHolder: 'Include project structure at the top of the file?',
-      })) === 'Yes'
-
-    if (includeStructure) {
-      output.push('# Project Structure\n\n```\n')
-      output.push(await generateProjectStructure(rootPath, ignoreRules))
-      output.push('```\n\n')
-    }
-
-    output.push('# File Contents\n\n')
-
-    processDirectory(
-      rootPath,
-      rootPath,
-      ignoreRules,
-      whitelistRules,
-      output,
-      config.removeComments === true
-    )
-
-    fs.writeFileSync(outputPath, output.join(''))
-    vscode.window.showInformationMessage(`Files exported to ${outputPath}`)
-  } catch (error: any) {
-    vscode.window.showErrorMessage(`Error exporting files: ${error.message}`)
-  }
+  )
 }
 
-function processDirectory(
+async function processDirectory(
   dirPath: string,
   rootPath: string,
   ignoreRules: ReturnType<typeof ignore>,
-  whitelistRules: string[],
+  includeRules: string[],
   output: string[],
-  removeComments: boolean
-): void {
+  removeComments: boolean,
+  processedPaths: Set<string>,
+  progress: vscode.Progress<{ message?: string; increment?: number }>,
+  token: vscode.CancellationToken
+): Promise<void> {
+  if (processedPaths.has(dirPath)) {
+    console.warn(`Skipping already processed directory: ${dirPath}`)
+    return
+  }
+  processedPaths.add(dirPath)
+
   try {
-    const files = fs.readdirSync(dirPath)
-    for (const file of files) {
+    const files = await vscode.workspace.fs.readDirectory(
+      vscode.Uri.file(dirPath)
+    )
+    for (const [file, fileType] of files) {
+      if (token.isCancellationRequested) {
+        return
+      }
+
       const filePath = path.join(dirPath, file)
       const relativePath = path.relative(rootPath, filePath)
 
-      const isWhitelisted = whitelistRules.some(
-        (rule) =>
-          minimatch(relativePath, rule) || minimatch(relativePath + '/', rule) // Handle directory patterns
-      )
-      const isIgnored = !isWhitelisted && ignoreRules.ignores(relativePath)
-
-      if (isWhitelisted || !isIgnored) {
-        const stat = fs.statSync(filePath)
-        if (stat.isDirectory()) {
-          processDirectory(
+      if (
+        !ignoreRules.ignores(relativePath) ||
+        shouldIncludeFile(relativePath, includeRules)
+      ) {
+        if (fileType === vscode.FileType.Directory) {
+          await processDirectory(
             filePath,
             rootPath,
             ignoreRules,
-            whitelistRules,
+            includeRules,
             output,
-            removeComments
+            removeComments,
+            processedPaths,
+            progress,
+            token
           )
-        } else {
-          let content = fs.readFileSync(filePath, 'utf8')
+        } else if (
+          fileType === vscode.FileType.File &&
+          shouldIncludeFile(relativePath, includeRules)
+        ) {
+          const content = await vscode.workspace.fs.readFile(
+            vscode.Uri.file(filePath)
+          )
+          let fileContent = new TextDecoder().decode(content)
+          const fileExtension = path.extname(file).slice(1)
+
           if (removeComments) {
-            content = stripComments(content)
+            try {
+              fileContent = stripComments(fileContent, {
+                language: fileExtension,
+                preserveNewlines: true,
+              })
+            } catch (error) {
+              console.warn(
+                `Unable to strip comments from ${file}. Using original content.`
+              )
+            }
           }
+
           output.push(
-            `## ${relativePath}\n\n\`\`\`\n${content.trimRight()}\n\`\`\`\n\n`
+            `## ${relativePath}\n\n\`\`\`${fileExtension}\n${fileContent.trimRight()}\n\`\`\`\n\n`
           )
+          progress.report({
+            increment: 1,
+            message: `Processed ${relativePath}`,
+          })
         }
       }
     }
   } catch (error: any) {
     vscode.window.showErrorMessage(
-      `Error processing directory: ${error.message}`
+      `Error processing directory ${dirPath}: ${error.message}`
     )
   }
 }
 
 async function getConfig(rootPath: string): Promise<{
   ignoreFile: string
-  allowList: string
+  includeList: string
   includeProjectStructure?: boolean
   output: string
   description?: string
@@ -170,7 +232,7 @@ async function getConfig(rootPath: string): Promise<{
     const configPath = path.join(rootPath, 'exportconfig.json')
     let config = {
       ignoreFile: '.export-ignore',
-      allowList: '.export-whitelist',
+      includeList: '.export-include',
       output: 'export.md',
       removeComments: false,
       allowIgnoredOnTabsExport: false,
@@ -188,86 +250,116 @@ async function getConfig(rootPath: string): Promise<{
 async function getIgnoreRules(rootPath: string, ignoreFile: string) {
   try {
     const globalIgnoreRules = vscode.workspace
-      .getConfiguration('exportDir2File')
-      .get('globalIgnoreRules', [])
-    const ignorePath = path.join(rootPath, ignoreFile)
+      .getConfiguration('directory2file')
+      .get('globalIgnoreRules', []) as string[]
+
     let ignoreRules = ignore().add(globalIgnoreRules)
 
+    const ignorePath = path.join(rootPath, ignoreFile)
     if (fs.existsSync(ignorePath)) {
       const ignoreContent = fs.readFileSync(ignorePath, 'utf8')
       ignoreRules = ignoreRules.add(
         ignoreContent.split('\n').filter((line) => line.trim() !== '')
       )
     }
+
+    // Add default ignore rules
+    ignoreRules = ignoreRules.add([
+      '.git',
+      'node_modules',
+      '.vscode',
+      'dist',
+      'out',
+      '*.vsix',
+    ])
+
     return ignoreRules
   } catch (error: any) {
     throw new Error(`Error getting ignore rules: ${error.message}`)
   }
 }
 
-async function getWhitelistRules(
+function shouldIncludeFile(
+  relativePath: string,
+  includeRules: string[]
+): boolean {
+  if (includeRules.length === 0) {
+    return true // If no include rules specified, include everything
+  }
+
+  return includeRules.some((rule) => {
+    if (rule.endsWith('/**')) {
+      // Handle directory wildcard
+      const dirPath = rule.slice(0, -3)
+      return relativePath.startsWith(dirPath)
+    }
+    return minimatch(relativePath, rule, { matchBase: true, dot: true })
+  })
+}
+
+async function getIncludeRules(
   rootPath: string,
-  allowList: string
+  includeList: string
 ): Promise<string[]> {
   try {
-    const globalWhitelistRules: string[] = vscode.workspace
-      .getConfiguration('exportDir2File')
-      .get('globalWhitelistRules', [])
-    const whitelistPath = path.join(rootPath, allowList)
-    let whitelistRules: string[] = [...globalWhitelistRules]
+    const globalIncludeRules: string[] = vscode.workspace
+      .getConfiguration('directory2file')
+      .get('globalIncludeRules', [])
+    const includePath = path.join(rootPath, includeList)
+    let includeRules: string[] = [...globalIncludeRules]
 
-    if (fs.existsSync(whitelistPath)) {
-      const whitelistContent = fs.readFileSync(whitelistPath, 'utf8')
-      const newRules: string[] = whitelistContent
+    if (fs.existsSync(includePath)) {
+      const includeContent = fs.readFileSync(includePath, 'utf8')
+      const newRules: string[] = includeContent
         .split('\n')
         .filter((line) => line.trim() !== '')
-        .map((pattern) => {
-          // Handle directory patterns
-          if (pattern.endsWith('/') || pattern.endsWith('\\')) {
-            return pattern + '**'
-          }
-          return pattern
-        })
-      whitelistRules = whitelistRules.concat(newRules)
+        .map((pattern) => pattern.trim())
+      includeRules = includeRules.concat(newRules)
     }
-    return whitelistRules
+    return includeRules
   } catch (error: any) {
-    throw new Error(`Error getting whitelist rules: ${error.message}`)
+    throw new Error(`Error getting include rules: ${error.message}`)
   }
 }
 
-function generateProjectStructure(
+async function generateProjectStructure(
   rootPath: string,
-  ignoreRules: ReturnType<typeof ignore>
-): string {
+  ignoreRules: ReturnType<typeof ignore>,
+  includeRules: string[]
+): Promise<string> {
   let result = ''
 
-  function addToStructure(currentPath: string, indent: string = ''): void {
+  async function addToStructure(
+    currentPath: string,
+    indent: string = ''
+  ): Promise<void> {
     try {
-      const files = fs.readdirSync(currentPath)
+      const files = await vscode.workspace.fs.readDirectory(
+        vscode.Uri.file(currentPath)
+      )
       files.sort((a, b) => {
-        const aPath = path.join(currentPath, a)
-        const bPath = path.join(currentPath, b)
-        const aIsDir = fs.statSync(aPath).isDirectory()
-        const bIsDir = fs.statSync(bPath).isDirectory()
+        const aIsDir = a[1] === vscode.FileType.Directory
+        const bIsDir = b[1] === vscode.FileType.Directory
         if (aIsDir && !bIsDir) {
           return -1
         }
         if (!aIsDir && bIsDir) {
           return 1
         }
-        return a.localeCompare(b)
+        return a[0].localeCompare(b[0])
       })
 
-      for (const file of files) {
+      for (const [file, fileType] of files) {
         const filePath = path.join(currentPath, file)
         const relativePath = path.relative(rootPath, filePath)
 
-        if (!ignoreRules.ignores(relativePath)) {
-          const stat = fs.statSync(filePath)
-          if (stat.isDirectory()) {
+        if (
+          !ignoreRules.ignores(relativePath) ||
+          shouldIncludeFile(relativePath, includeRules)
+        ) {
+          if (fileType === vscode.FileType.Directory) {
             result += `${indent}${file}/\n`
-            addToStructure(filePath, indent + '  ')
+            await addToStructure(filePath, indent + '  ')
           } else {
             result += `${indent}${file}\n`
           }
@@ -280,11 +372,10 @@ function generateProjectStructure(
     }
   }
 
-  addToStructure(rootPath)
+  await addToStructure(rootPath)
   return result
 }
 
-// TODO: separate ignore rules via comma
 async function createExpIgnore() {
   try {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
@@ -352,7 +443,7 @@ async function createExpIgnore() {
   }
 }
 
-async function createExpWhitelist() {
+async function createExpInclude() {
   try {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
     if (!workspaceFolder) {
@@ -361,13 +452,13 @@ async function createExpWhitelist() {
 
     const rootPath = workspaceFolder.uri.fsPath
     const config = await getConfig(rootPath)
-    const expWhitelistPath = path.join(rootPath, config.allowList)
+    const expIncludePath = path.join(rootPath, config.includeList)
 
-    if (fs.existsSync(expWhitelistPath)) {
+    if (fs.existsSync(expIncludePath)) {
       const choice = await vscode.window.showQuickPick(
         ['Overwrite', 'Append', 'Cancel'],
         {
-          placeHolder: `${config.allowList} already exists. What would you like to do?`,
+          placeHolder: `${config.includeList} already exists. What would you like to do?`,
         }
       )
 
@@ -377,32 +468,34 @@ async function createExpWhitelist() {
 
       if (choice === 'Append') {
         const content = await vscode.window.showInputBox({
-          prompt: 'Enter patterns to whitelist (separate via comma)',
+          prompt: 'Enter patterns to include (separate via comma)',
         })
         if (content) {
-          let whitelistList = content.split(',')
-          whitelistList = whitelistList.map((item) => item.trim())
-          for (const item of whitelistList) {
-            fs.appendFileSync(expWhitelistPath, `${item}\n`)
+          let includeList = content.split(',')
+          includeList = includeList.map((item) => item.trim())
+          for (const item of includeList) {
+            fs.appendFileSync(expIncludePath, `${item}\n`)
           }
-          vscode.window.showInformationMessage(`${config.allowList} updated`)
+          vscode.window.showInformationMessage(`${config.includeList} updated`)
         }
         return
       }
     }
 
     const content = await vscode.window.showInputBox({
-      prompt: 'Enter patterns to whitelist (separate via comma)',
+      prompt: 'Enter patterns to include (separate via comma)',
     })
 
     if (content) {
-      let whitelistList = content.split(',')
-      whitelistList = whitelistList.map((item) => item.trim())
-      fs.writeFileSync(expWhitelistPath, whitelistList.join('\n') + '\n')
-      vscode.window.showInformationMessage(`${config.allowList} created`)
+      let includeList = content.split(',')
+      includeList = includeList.map((item) => item.trim())
+      fs.writeFileSync(expIncludePath, includeList.join('\n') + '\n')
+      vscode.window.showInformationMessage(`${config.includeList} created`)
     }
   } catch (error: any) {
-    vscode.window.showErrorMessage(`Error creating allowList: ${error.message}`)
+    vscode.window.showErrorMessage(
+      `Error creating includeList: ${error.message}`
+    )
   }
 }
 
@@ -428,6 +521,7 @@ async function exportActiveTabs() {
       .map((tab) => (tab.input as vscode.TabInputText).uri.fsPath)
 
     const ignoreRules = await getIgnoreRules(rootPath, config.ignoreFile)
+    const includeRules = await getIncludeRules(rootPath, config.includeList)
 
     const includeStructure =
       config.includeProjectStructure ??
@@ -437,7 +531,9 @@ async function exportActiveTabs() {
 
     if (includeStructure) {
       output.push('# Project Structure\n\n```\n')
-      output.push(await generateProjectStructure(rootPath, ignoreRules))
+      output.push(
+        await generateProjectStructure(rootPath, ignoreRules, includeRules)
+      )
       output.push('```\n\n')
     }
 
@@ -446,12 +542,13 @@ async function exportActiveTabs() {
     for (const filePath of activeTabs) {
       const relativePath = path.relative(rootPath, filePath)
       const isIgnored = ignoreRules.ignores(relativePath)
+      const shouldInclude = shouldIncludeFile(relativePath, includeRules)
 
-      if (isIgnored && !config.allowIgnoredOnTabsExport) {
+      if ((isIgnored && !config.allowIgnoredOnTabsExport) || !shouldInclude) {
         const includeIgnored = await vscode.window.showQuickPick(
           ['Yes', 'No'],
           {
-            placeHolder: `${relativePath} is ignored. Include it anyway?`,
+            placeHolder: `${relativePath} is ignored or not included. Include it anyway?`,
           }
         )
         if (includeIgnored !== 'Yes') {
@@ -463,8 +560,9 @@ async function exportActiveTabs() {
       if (config.removeComments) {
         content = stripComments(content)
       }
+      const fileExtension = path.extname(filePath).slice(1)
       output.push(
-        `## ${relativePath}\n\n\`\`\`\n${content.trimRight()}\n\`\`\`\n\n`
+        `## ${relativePath}\n\n\`\`\`${fileExtension}\n${content.trimRight()}\n\`\`\`\n\n`
       )
     }
 

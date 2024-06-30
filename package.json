@@ -1,15 +1,14 @@
 {
   "name": "directory2file",
   "displayName": "Export Directory to File",
-  "description": "Export all files in a directory to a single Markdown file with ignore and whitelist support",
-  "version": "0.0.1",
+  "description": "Export all files in a directory to a single Markdown file with ignore and include support",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -22,8 +21,8 @@
         "title": "Dir2file: Create/Edit ignore File"
       },
       {
-        "command": "directory2file.createWhitelist",
-        "title": "Dir2file: Create/Edit whitelist File"
+        "command": "directory2file.createInclude",
+        "title": "Dir2file: Create/Edit include File"
       },
       {
         "command": "directory2file.exportActiveTabs",
@@ -33,23 +32,54 @@
         "command": "directory2file.openSettings",
         "title": "Dir2file: Open Extension Settings"
       }
-    ]
-  },
-  "configuration": {
-    "title": "Export Directory to File",
-    "properties": {
-      "directory2file.globalIgnoreRules": {
-        "type": "array",
-        "default": [],
-        "description": "Global ignore rules for all exports"
-      },
-      "directory2file.globalWhitelistRules": {
-        "type": "array",
-        "default": [],
-        "description": "Global whitelist rules for all exports"
+    ],
+    "configuration": {
+      "title": "Export Directory to File",
+      "properties": {
+        "directory2file.globalIgnoreRules": {
+          "type": "array",
+          "default": [
+            "node_modules",
+            "dist",
+            "out",
+            "build",
+            "tmp",
+            "temp",
+            "builds",
+            "builds/*",
+            "builds/*/*",
+            "builds/*/*/*",
+            ".git"
+          ],
+          "description": "Global ignore rules for all exports"
+        }
       }
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cogscides/vscode-export-dir2file"
+  },
+  "bugs": {
+    "url": "https://github.com/cogscides/vscode-export-dir2file/issues"
+  },
+  "homepage": "https://github.com/cogscides/vscode-export-dir2file#readme",
+  "keywords": [
+    "VSCode",
+    "extension",
+    "export",
+    "directory",
+    "file",
+    "markdown",
+    "ignore",
+    "include"
+  ],
+  "author": {
+    "name": "cogscides",
+    "email": "cogscides@gmail.com"
+  },
+  "publisher": "cogscides",
+  "license": "MIT",
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "npm run check-types && npm run lint && node esbuild.js",
