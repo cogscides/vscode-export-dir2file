@@ -7,43 +7,53 @@ This Visual Studio Code extension allows you to export all files in a directory 
 ## Features
 
 - Export all files in a directory to `export.md`.
-- Support for ignoring and whitelisting files using `.exp-ignore` and `.exp-whitelist`.
+- Support for ignoring and whitelisting files using config variables `ignoreList` and `includeFile`.
+- Set global ignore filepath rules from settings
 - Option to include project structure in the exported Markdown file.
-- Configuration through `.exportconfig.json`.
+- Option to remove in language comments
+- Checks if the folder contains too many files (handful for specifying rules)
+- Export active tabs
+- Configuration through `exportconfig.json`.
 
 ## Configuration
 
-Create a `.exportconfig.json` file in the root of your workspace to configure the extension:
+Create a `exportconfig.json` file in the root of your workspace to configure the extension:
 
 ```json
 {
-  "output": "export.md",
-  "description": "This is the project codebase we are working on.",
-  "ignoreFile": ".exp-ignore",
-  "allowList": ".exp-whitelist",
+  "output": "export/export.md",
+  "description": "export/project-description.md",
+  "ignoreList": "export/.export-ignore",
+  "includeFile": "export/.export-whitelist",
+  "maxFileSize": 1048576,
+  "removeComments": true,
   "includeProjectStructure": true
 }
 ```
 
 - `output`: Path to the output file (default is `export.md`).
-- `descrition`: Description of the project (default is `\n\n`) or actual Markdown content.
-- `ignoreFile`: Path to the file containing ignore patterns (default is `.exp-ignore`).
-- `allowList`: Path to the file containing whitelist patterns (default is `.exp-whitelist`).
+- `descrition`: Path to description of the project (default is `\n\n`) or actual text content than be included at the begining of exported file.
+- `ignoreFile`: Path to the file containing ignore patterns (filename should be `.export-ignore`).
+- `includeFile`: Path to the file containing whitelist patterns (filename should be `.export-include`).
+- `maxFileSize`: Maximum file size in bytes to process (default is 1048576 or 1MB).
 - `includeProjectStructure`: Whether to include the project structure in the exported file (default is `true`).
+
+P.S. `ignoreFile` and `includeFile` could be named differently but then VSCode will try to identify them as .md and you may have markup issues during save.
 
 ## Commands
 
-- `Dir2file: Export Directory to Markdown`: Exports the directory to `export.md`.
-- `Dir2file: Create/Edit .exp-ignore File`: Creates or edits the `.exp-ignore` file.
-- `Dir2file: Create/Edit .exp-whitelist File`: Creates or edits the `.exp-whitelist` file.
+- `Dir2file: Export Directory to File`: Exports the directory to `export.md`.
+- `Dir2file: Create/Edit ignore File`: Creates or edits the ignore file specified in `ignoreFile`.
+- `Dir2file: Create/Edit include File`: Creates or edits the include file specified in `includeFile`.
 
 ## Usage
 
 1. Install the extension.
-2. Configure the `.exportconfig.json` file (optional).
-3. Run the command `Dir2file: Export Directory to Markdown` to export the directory.
+2. Configure the `exportconfig.json` file (optional).
+3. [Optional] Use commands `Dir2file: Create/Edit ignore File` and `Dir2file: Create/Edit include File` to create or edit the ignore and include files.
+4. Run the command `Dir2file: Export Directory to Markdown` to export the directory to `output` file.
 
-## Example `.exp-ignore`
+## Example `.export-ignore`
 
 ```
 out/
@@ -53,7 +63,7 @@ node_modules/
 *.vsix
 ```
 
-## Example `.exp-whitelist`
+## Example `.export-include`
 
 ```
 src/**

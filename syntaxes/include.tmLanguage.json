@@ -1,0 +1,19 @@
+{
+  "name": "Export Include",
+  "scopeName": "source.exportinclude",
+  "fileTypes": [".export-include"],
+  "patterns": [
+    {
+      "match": "^\\s*#.*$",
+      "name": "comment.line.number-sign.exportinclude"
+    },
+    {
+      "match": "^\\s*\\*.*$",
+      "name": "string.regexp.wildcard.exportinclude"
+    },
+    {
+      "match": "^\\s*[^#*\\s].*$",
+      "name": "string.unquoted.pattern.exportinclude"
+    }
+  ]
+}

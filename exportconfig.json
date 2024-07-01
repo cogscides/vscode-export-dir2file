@@ -1,8 +1,9 @@
 {
   "output": "export/export.md",
-  "description": "This is the project codebase we are working on.",
+  "description": "export/project-description.md",
   "ignoreFile": "export/.export-ignore",
-  "includeList": "export/.export-whitelist",
+  "includeFile": "export/.export-include",
+  "maxFileSize": 1048576,
   "removeComments": true,
   "includeProjectStructure": true
 }

@@ -2,7 +2,7 @@
   "name": "directory2file",
   "displayName": "Export Directory to File",
   "description": "Export all files in a directory to a single Markdown file with ignore and include support",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -45,16 +45,83 @@
             "build",
             "tmp",
             "temp",
-            "builds",
-            "builds/*",
-            "builds/*/*",
-            "builds/*/*/*",
-            ".git"
+            ".git",
+            ".vscode"
           ],
-          "description": "Global ignore rules for all exports"
+          "description": "Global patterns to ignore when exporting"
+        },
+        "directory2file.maxFileSize": {
+          "type": "number",
+          "default": 1048576,
+          "description": "Maximum file size in bytes to process (default: 1MB)"
+        },
+        "directory2file.stripCommentsFromExtensions": {
+          "type": "array",
+          "default": [
+            "js",
+            "ts",
+            "jsx",
+            "tsx",
+            "css",
+            "less",
+            "scss",
+            "html",
+            "xml",
+            "svg",
+            "yaml",
+            "yml",
+            "py",
+            "rb",
+            "php",
+            "java",
+            "c",
+            "cpp",
+            "cs",
+            "go",
+            "rs",
+            "swift",
+            "kt"
+          ],
+          "description": "File extensions from which to strip comments"
         }
       }
-    }
+    },
+    "languages": [
+      {
+        "id": "exportignore",
+        "aliases": [
+          "Export Ignore",
+          "exportignore"
+        ],
+        "extensions": [
+          ".export-ignore"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "exportinclude",
+        "aliases": [
+          "Export Include",
+          "exportinclude"
+        ],
+        "extensions": [
+          ".export-include"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "exportignore",
+        "scopeName": "source.exportignore",
+        "path": "./syntaxes/ignore.tmLanguage.json"
+      },
+      {
+        "language": "exportinclude",
+        "scopeName": "source.exportinclude",
+        "path": "./syntaxes/include.tmLanguage.json"
+      }
+    ]
   },
   "repository": {
     "type": "git",

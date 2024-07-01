@@ -1,0 +1,23 @@
+{
+  "name": "Export Ignore",
+  "scopeName": "source.exportignore",
+  "fileTypes": [".export-ignore"],
+  "patterns": [
+    {
+      "match": "^\\s*#.*$",
+      "name": "comment.line.number-sign.exportignore"
+    },
+    {
+      "match": "^\\s*!.*$",
+      "name": "keyword.other.negation.exportignore"
+    },
+    {
+      "match": "^\\s*\\*.*$",
+      "name": "string.regexp.wildcard.exportignore"
+    },
+    {
+      "match": "^\\s*[^#!*\\s].*$",
+      "name": "string.unquoted.pattern.exportignore"
+    }
+  ]
+}
