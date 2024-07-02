@@ -4,12 +4,12 @@
 
 ## Description
 
-This Visual Studio Code extension allows you to export all files in a directory to a single Markdown file with support for ignoring and whitelisting files. This is particularly useful for creating comprehensive documentation or exporting files for AI or any other documentation purposes.
+This VScode extension allows you to export all files in a directory to a single file with support for ignoring and include rules. This is particularly useful for exporting files for AI or documentation purposes.
 
 ## Features
 
 - Export all files in a directory to `export.md`.
-- Support for ignoring and whitelisting files using config variables `ignoreList` and `includeFile`.
+- Support for ignoring and whitelisting files using config variables `ignoreFile` and `includeFile`.
 - Set global ignore filepath rules from settings
 - Option to include project structure in the exported Markdown file.
 - Option to remove in language comments
