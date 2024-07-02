@@ -4,7 +4,7 @@ All notable changes to the "export-dir2file" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [0.0.9] - Jul 2, 2024
+## [0.1.0] - Jul 2, 2024
 
 - bug fixes
 
