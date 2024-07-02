@@ -2,7 +2,7 @@
   "name": "directory2file",
   "displayName": "Export Directory to File",
   "description": "Export all files in a directory to a single Markdown file with ignore and include support",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.90.0"
   },

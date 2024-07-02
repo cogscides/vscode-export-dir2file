@@ -1,6 +1,9 @@
 {
   "output": "export/export.md",
-  "description": "export/project-description.md",
+  "descriptions": {
+    "main": "export/description.md",
+    "activeTabs": "export/descriptionTabs.md"
+  },
   "ignoreFile": "export/.export-ignore",
   "includeFile": "export/.export-include",
   "maxFileSize": 1048576,
