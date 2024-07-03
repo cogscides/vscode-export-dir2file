@@ -1,6 +1,6 @@
 # Export Directory to File
 
-[🚧 UNSTABLE - WIP]
+[[Open in VSCode](vscode:extension/cogscides.directory2file)] - [🚧 WIP]
 
 ## Description
 
