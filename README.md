@@ -83,4 +83,51 @@ src/**
 README.md
 ```
 
-This extension is a quick way to export your actual files for AI or any other documentation purposes.
+## Example markdown output
+
+````markdown
+# Project Description: Export Directory to File
+
+### Overview
+
+- **Project Type**: Visual Studio Code Extension
+- **Purpose**: Export all files in a directory to a single file for further processing by AI
+
+---
+
+# Project Structure
+
+```json
+exportconfig.json
+images/
+language-configuration.json
+package.json
+packages/
+src/
+  commands/
+    CreateIgnoreCommand.ts
+    CreateIncludeCommand.ts
+    ExportActiveTabsCommand.ts
+    ExportCommand.ts
+    OpenSettingsCommand.ts
+  extension.ts
+  test/
+  utils/
+    ConfigManager.ts
+    FileProcessor.ts
+    ProjectStructureGenerator.ts
+syntaxes/
+```
+
+## exportconfig.json
+
+```json
+{FILE_CONTENT}
+```
+
+## language-configuration.json
+
+```json
+{FILE_CONTENT}
+```
+````
