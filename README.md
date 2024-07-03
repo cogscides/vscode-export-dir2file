@@ -130,4 +130,6 @@ syntaxes/
 ```json
 {FILE_CONTENT}
 ```
+
+....{OTHER_FILES}
 ````
