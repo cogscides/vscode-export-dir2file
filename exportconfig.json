@@ -1,9 +1,6 @@
 {
   "output": "export/export.md",
-  "descriptions": {
-    "main": "export/description.md",
-    "activeTabs": "export/descriptionTabs.md"
-  },
+  "description": "VSCode extension to export all files in a directory to a single file with ignore and include support",
   "ignoreFile": "export/.export-ignore",
   "includeFile": "export/.export-include",
   "maxFileSize": 1048576,

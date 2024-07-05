@@ -6,14 +6,15 @@ export interface Config {
   includeFile: string
   includeProjectStructure?: boolean
   output: string
-  description?: string
   removeComments?: boolean
   allowIgnoredOnTabsExport?: boolean
   maxFileSize?: number
-  descriptions: {
-    main: string
-    activeTabs: string
-  }
+  description?:
+    | string
+    | {
+        main?: string
+        activeTabs?: string
+      }
 }
 
 export class ConfigManager {
@@ -32,7 +33,7 @@ export class ConfigManager {
       removeComments: false,
       allowIgnoredOnTabsExport: false,
       maxFileSize: 1024 * 1024,
-      descriptions: {
+      description: {
         main: '',
         activeTabs: '',
       },
@@ -48,15 +49,18 @@ export class ConfigManager {
 
   async getDescription(type: 'main' | 'activeTabs'): Promise<string> {
     const config = await this.getConfig()
-    const descriptionPath = config.descriptions[type]
+    let description = ''
 
-    if (descriptionPath) {
-      const fullPath = path.join(this.rootPath, descriptionPath)
-      if (fs.existsSync(fullPath)) {
-        return fs.readFileSync(fullPath, 'utf8')
-      }
+    if (typeof config.description === 'string') {
+      description = config.description
+    } else if (config.description && typeof config.description === 'object') {
+      description = config.description[type] || ''
     }
 
-    return ''
+    if (description && fs.existsSync(path.join(this.rootPath, description))) {
+      return fs.readFileSync(path.join(this.rootPath, description), 'utf8')
+    }
+
+    return description
   }
 }

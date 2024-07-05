@@ -38,6 +38,7 @@ export class FileProcessor {
   ): Promise<string[]> {
     this.log('Starting directory processing')
     const output: string[] = []
+
     await this.buildTreeStructure(this.rootPath, '')
     const totalFiles = this.filesToProcess.length
     this.log(`Total files to process: ${totalFiles}`)
@@ -298,18 +299,6 @@ export class FileProcessor {
     }
 
     return content
-  }
-
-  private async getDescription(): Promise<string> {
-    if (this.config.description) {
-      const descriptionPath = path.join(this.rootPath, this.config.description)
-      if (fs.existsSync(descriptionPath)) {
-        return fs.readFileSync(descriptionPath, 'utf8')
-      } else {
-        return this.config.description
-      }
-    }
-    return ''
   }
 
   private async getFiles(dir: string): Promise<string[]> {

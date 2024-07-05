@@ -39,14 +39,17 @@ export class ExportActiveTabsCommand {
 
     let output: string[] = []
 
-    // Add description at the top
     const description = await configManager.getDescription('activeTabs')
     if (description) {
       output.push(description + '\n\n')
     }
 
-    // Add project structure if configured
     if (config.includeProjectStructure) {
+      const structureGenerator = new ProjectStructureGenerator(
+        rootPath,
+        config,
+        fileProcessor
+      )
       output.push(await structureGenerator.generate())
     }
 

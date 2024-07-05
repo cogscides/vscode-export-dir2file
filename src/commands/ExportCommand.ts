@@ -49,6 +49,15 @@ export class ExportCommand {
             output.push(description + '\n\n')
           }
 
+          if (config.includeProjectStructure) {
+            const structureGenerator = new ProjectStructureGenerator(
+              rootPath,
+              config,
+              fileProcessor
+            )
+            output.push(await structureGenerator.generate())
+          }
+
           const processedFiles = await fileProcessor.processDirectory(
             progress,
             token
@@ -56,10 +65,6 @@ export class ExportCommand {
           this.outputChannel.appendLine(
             `Processed files: ${processedFiles.length}`
           )
-
-          if (config.includeProjectStructure) {
-            output.push(await structureGenerator.generate())
-          }
 
           output = output.concat(processedFiles)
 
