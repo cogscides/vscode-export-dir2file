@@ -8,7 +8,7 @@ This VScode extension allows you to export all files in a directory to a single 
 
 ## Features
 
-- Export all files in a directory to `export.md`.
+- Export all files in a directory to file (default: `export.md`).
 - Support for ignoring and whitelisting files using config variables `ignoreFile` and `includeFile`.
 - Set global ignore filepath rules from settings
 - Option to include project structure in the exported Markdown file.
@@ -21,10 +21,26 @@ This VScode extension allows you to export all files in a directory to a single 
 
 Create a `exportconfig.json` file in the root of your workspace to configure the extension:
 
+### Default config
+
+```json
+{
+  "output": "export.md",
+  "description": "",
+  "ignoreFile": ".export-ignore",
+  "includeFile": ".export-whitelist",
+  "maxFileSize": 1048576,
+  "removeComments": true,
+  "includeProjectStructure": true
+}
+```
+
+### Customized config example
+
 ```json
 {
   "output": "export/export.md",
-  "descriptions": {
+  "description": {
     "main": "export/project-description.md",
     "activeTabs": "export/project-description.md"
   },
@@ -37,20 +53,21 @@ Create a `exportconfig.json` file in the root of your workspace to configure the
 ```
 
 - `output`: Path to the output file (default is `export.md`).
-- `descriptions`
+- `description`: String | Object{`main`: string, `activeTabs`: string}.
   - `main`: Path to description of the project (default is `\n\n`) or actual text content than be included at the begining of exported file.
   - `activeTabs`: Path to description of the project for active tabs export (default is `\n\n`) or actual text content than be included at the begining of exported file.
 - `ignoreFile`: Path to the file containing ignore patterns (filename should be `.export-ignore`).
-- `includeFile`: Path to the file containing whitelist patterns (filename should be `.export-include`).
+- `includeFile`: Path to the file containing what exact files to include (filename should be `.export-include`).
 - `maxFileSize`: Maximum file size in bytes to process (default is 1048576 or 1MB).
 - `includeProjectStructure`: Whether to include the project structure in the exported file (default is `true`).
 
-P.S. `ignoreFile` and `includeFile` could be named differently but then VSCode will try to identify them as .md and you may have markup issues during save.
+P.S. `ignoreFile` and `includeFile` could be named differently but then VSCode will try to identify them as .md and you may have markup issues during saves.
 
 ## Commands
 
-- `Dir2file: Export Directory to File`: Exports the directory to `export.md`.
-- `Dir2file: Export only active tabs`: Exports only the active tabs to `export.md`.
+- `Dir2file: Export Directory to File`: Exports the directory to `output` file.
+- `Dir2file: Select Files to Export`: Select files from tree to export (autosave last selection).
+- `Dir2file: Export only active tabs`: Exports only the active tabs to `output` file.
 - `Dir2file: Create/Edit ignore File`: Creates or edits the ignore file specified in `ignoreFile`.
 - `Dir2file: Create/Edit include File`: Creates or edits the include file specified in `includeFile`.
 
