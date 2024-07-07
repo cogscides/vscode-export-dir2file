@@ -4,6 +4,10 @@ All notable changes to the "export-dir2file" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.1] - Jul 7, 2024
+
+- Readme updated
+
 ## [0.2.0] - Jul 6, 2024
 
 - Added command `directory2file.selectFilesToExport` to select files to export from the tree with saving the last selection
