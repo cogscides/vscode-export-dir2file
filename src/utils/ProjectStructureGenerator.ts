@@ -1,19 +1,20 @@
-// src/utils/ProjectStructureGenerator.ts
-
 import * as vscode from 'vscode'
 import * as path from 'path'
-import * as fs from 'fs'
-import { Config } from './ConfigManager'
+import { ConfigManager } from './ConfigManager'
 import { FileProcessor } from './FileProcessor'
 
 export class ProjectStructureGenerator {
   private rootPath: string
-  private config: Config
+  private configManager: ConfigManager
   private fileProcessor: FileProcessor
 
-  constructor(rootPath: string, config: Config, fileProcessor: FileProcessor) {
+  constructor(
+    rootPath: string,
+    configManager: ConfigManager,
+    fileProcessor: FileProcessor
+  ) {
     this.rootPath = rootPath
-    this.config = config
+    this.configManager = configManager
     this.fileProcessor = fileProcessor
   }
 
@@ -34,9 +35,13 @@ export class ProjectStructureGenerator {
     )
     const structure: string[] = []
 
-    for (const [name, type] of entries) {
+    const sortedEntries = this.fileProcessor.sortEntries(entries)
+
+    for (const [name, type] of sortedEntries) {
       const relativePath = path.relative(this.rootPath, path.join(dir, name))
-      if (await this.fileProcessor.shouldProcessFile(relativePath)) {
+      if (
+        await this.fileProcessor.shouldProcessFile(relativePath, false, false)
+      ) {
         if (type === vscode.FileType.Directory) {
           structure.push(`${prefix}${name}/`)
           const subStructure = await this.buildTreeStructure(

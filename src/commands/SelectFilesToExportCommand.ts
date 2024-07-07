@@ -4,7 +4,6 @@ import * as fs from 'fs/promises'
 import { FileProcessor } from '../utils/FileProcessor'
 import { ConfigManager } from '../utils/ConfigManager'
 import { ProjectStructureGenerator } from '../utils/ProjectStructureGenerator'
-import { Config } from '../utils/ConfigManager'
 
 interface TreeItem extends vscode.QuickPickItem {
   path: string
@@ -17,28 +16,22 @@ export class SelectFilesToExportCommand {
   private fileProcessor: FileProcessor
   private configManager: ConfigManager
   private rootPath: string
-  private projectStructureGenerator!: ProjectStructureGenerator
-  private config!: Config
+  private projectStructureGenerator: ProjectStructureGenerator
   private selectedItems: Set<string> = new Set()
   private context: vscode.ExtensionContext
 
-  constructor(
-    fileProcessor: FileProcessor,
-    configManager: ConfigManager,
-    context: vscode.ExtensionContext
-  ) {
-    this.fileProcessor = fileProcessor
+  constructor(configManager: ConfigManager, context: vscode.ExtensionContext) {
     this.configManager = configManager
     this.context = context
     this.rootPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath || ''
-    this.initialize()
-  }
-
-  private async initialize() {
-    this.config = await this.configManager.getConfig()
+    this.fileProcessor = new FileProcessor(
+      this.rootPath,
+      this.configManager,
+      vscode.window.createOutputChannel('Directory2File')
+    )
     this.projectStructureGenerator = new ProjectStructureGenerator(
       this.rootPath,
-      this.config,
+      this.configManager,
       this.fileProcessor
     )
     this.loadSelectedItems()
@@ -60,7 +53,6 @@ export class SelectFilesToExportCommand {
   }
 
   async execute() {
-    await this.initialize()
     const treeItems = await this.buildTreeItems(this.rootPath)
     const selectedItems = await this.showQuickPick(treeItems)
 
@@ -81,18 +73,21 @@ export class SelectFilesToExportCommand {
     )
     const items: TreeItem[] = []
 
-    for (const [name, type] of entries) {
+    const sortedEntries = this.fileProcessor.sortEntries(entries)
+
+    for (const [name, type] of sortedEntries) {
       const fullPath = path.join(dir, name)
       const relativePath = this.normalizePath(
         path.relative(this.rootPath, fullPath)
       )
 
-      if (await this.fileProcessor.shouldProcessFile(relativePath)) {
+      if (
+        await this.fileProcessor.shouldProcessFile(relativePath, false, false)
+      ) {
         const isFolder = type === vscode.FileType.Directory
         const item: TreeItem = {
           label: this.getLabel(name, isFolder, level),
           description: relativePath,
-          // detail: isFolder ? 'Folder' : path.extname(name).slice(1),
           path: relativePath,
           isFolder,
           level,
@@ -214,7 +209,8 @@ export class SelectFilesToExportCommand {
           return
         })
 
-        const outputPath = path.join(this.rootPath, this.config.output)
+        const config = await this.configManager.getConfig()
+        const outputPath = path.join(this.rootPath, config.output)
 
         let output = ''
 
@@ -224,7 +220,7 @@ export class SelectFilesToExportCommand {
           output += description + '\n\n'
         }
 
-        if (this.config.includeProjectStructure) {
+        if (config.includeProjectStructure) {
           output += (await this.projectStructureGenerator.generate()) + '\n\n'
         }
 
@@ -243,16 +239,16 @@ export class SelectFilesToExportCommand {
           })
 
           const fullPath = path.join(this.rootPath, filePath)
-          const content = await fs.readFile(fullPath, 'utf-8')
-
-          output += `## ${filePath}\n\n\`\`\`${path
-            .extname(filePath)
-            .slice(1)}\n${content}\n\`\`\`\n\n`
+          const content = await this.fileProcessor.processFile(
+            fullPath,
+            filePath
+          )
+          output += content
         }
 
         await fs.writeFile(outputPath, output)
         vscode.window.showInformationMessage(
-          `Exported ${filesToExport.length} files to ${this.config.output}`
+          `Exported ${filesToExport.length} files to ${config.output}`
         )
       }
     )

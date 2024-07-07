@@ -22,7 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   // We need to await the config here
   configManager.getConfig().then((config) => {
-    const fileProcessor = new FileProcessor(rootPath, config, outputChannel)
+    const fileProcessor = new FileProcessor(
+      rootPath,
+      configManager,
+      outputChannel
+    )
 
     const exportCommand = new ExportCommand(outputChannel)
     const createIgnoreCommand = new CreateIgnoreCommand()
@@ -30,7 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
     const exportActiveTabsCommand = new ExportActiveTabsCommand(outputChannel)
     const openSettingsCommand = new OpenSettingsCommand()
     const selectFilesToExportCommand = new SelectFilesToExportCommand(
-      fileProcessor,
       configManager,
       context
     )

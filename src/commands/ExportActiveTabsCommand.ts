@@ -20,15 +20,14 @@ export class ExportActiveTabsCommand {
 
     const rootPath = workspaceFolder.uri.fsPath
     const configManager = new ConfigManager(rootPath)
-    const config = await configManager.getConfig()
     const fileProcessor = new FileProcessor(
       rootPath,
-      config,
+      configManager,
       this.outputChannel
     )
     const structureGenerator = new ProjectStructureGenerator(
       rootPath,
-      config,
+      configManager,
       fileProcessor
     )
 
@@ -39,17 +38,13 @@ export class ExportActiveTabsCommand {
 
     let output: string[] = []
 
+    const config = await configManager.getConfig()
     const description = await configManager.getDescription('activeTabs')
     if (description) {
       output.push(description + '\n\n')
     }
 
     if (config.includeProjectStructure) {
-      const structureGenerator = new ProjectStructureGenerator(
-        rootPath,
-        config,
-        fileProcessor
-      )
       output.push(await structureGenerator.generate())
     }
 

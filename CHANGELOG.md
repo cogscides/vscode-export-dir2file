@@ -4,6 +4,12 @@ All notable changes to the "export-dir2file" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.3] - Jul 7, 2024
+
+- The tree structure and QuickPick are no longer affected by include rules.
+- Rules are refreshed without reloading VSCode by using the ConfigManager instead of a static Config object.
+- The sorting of the TreeStructure now matches VSCode explorer sorting rules.
+
 ## [0.2.1] & [0.2.2] - Jul 7, 2024
 
 - Readme updates

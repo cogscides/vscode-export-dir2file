@@ -4,38 +4,46 @@ import * as path from 'path'
 import ignore, { Ignore } from 'ignore'
 import { minimatch } from 'minimatch'
 import stripComments from 'strip-comments'
-import { Config } from './ConfigManager'
+import { Config, ConfigManager } from './ConfigManager'
 
 export class FileProcessor {
   private rootPath: string
-  private config: Config
+  private configManager: ConfigManager
   private outputChannel: vscode.OutputChannel
-  private ignoreRules: Ignore
-  private includeRules: string[]
+  private ignoreRules!: Ignore
+  private includeRules!: string[]
   private userChoiceCache: Map<string, string> = new Map()
   private processedFiles: Set<string> = new Set()
   private treeStructure: string[] = []
   private filesToProcess: string[] = []
+  private initializationPromise: Promise<void>
 
   constructor(
     rootPath: string,
-    config: Config,
+    configManager: ConfigManager,
     outputChannel: vscode.OutputChannel
   ) {
     this.rootPath = rootPath
-    this.config = config
+    this.configManager = configManager
     this.outputChannel = outputChannel
-    this.ignoreRules = this.getIgnoreRules()
-    this.includeRules = this.getIncludeRules()
+    this.initializationPromise = this.initialize()
+  }
+
+  private async initialize() {
+    this.ignoreRules = await this.getIgnoreRules()
+    this.includeRules = await this.getIncludeRules()
     this.log('FileProcessor initialized')
   }
 
-  // In src/utils/FileProcessor.ts
+  private async ensureInitialized() {
+    await this.initializationPromise
+  }
 
   async processDirectory(
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     token: vscode.CancellationToken
   ): Promise<string[]> {
+    await this.ensureInitialized()
     this.log('Starting directory processing')
     const output: string[] = []
 
@@ -81,17 +89,24 @@ export class FileProcessor {
     return output
   }
 
-  async shouldProcessFile(relativePath: string): Promise<boolean> {
+  async shouldProcessFile(
+    relativePath: string,
+    applyInclude: boolean = true,
+    promptOnIncludeIntersect: boolean = true
+  ): Promise<boolean> {
+    await this.ensureInitialized()
+
+    const config = await this.configManager.getConfig()
     const isIgnored = this.ignoreRules.ignores(relativePath)
-    const isIncluded = this.shouldIncludeFile(relativePath)
+    const isIncluded = applyInclude && this.shouldIncludeFile(relativePath)
 
     this.log(`Checking file: ${relativePath}`)
     this.log(`  Ignored: ${isIgnored}`)
     this.log(`  Included: ${isIncluded}`)
 
-    if (this.includeRules.length > 0) {
+    if (applyInclude && this.includeRules.length > 0) {
       if (isIncluded) {
-        if (isIgnored) {
+        if (isIgnored && promptOnIncludeIntersect) {
           const userChoice = await this.promptUser(relativePath)
           if (userChoice === 'Yes' || userChoice === 'YesAll') {
             this.log(
@@ -153,7 +168,9 @@ export class FileProcessor {
 
   async processFile(filePath: string, relativePath: string): Promise<string> {
     const stats = await vscode.workspace.fs.stat(vscode.Uri.file(filePath))
-    if (stats.size > (this.config.maxFileSize || 1024 * 1024)) {
+    const config = await this.configManager.getConfig()
+
+    if (stats.size > (config.maxFileSize || 1024 * 1024)) {
       return `## ${relativePath}\n\nFile is too large to process (${stats.size} bytes)\n\n`
     }
 
@@ -161,7 +178,7 @@ export class FileProcessor {
     let fileContent = new TextDecoder().decode(content)
     const fileExtension = path.extname(filePath).slice(1)
 
-    if (this.config.removeComments) {
+    if (config.removeComments) {
       fileContent = this.stripComments(fileContent, fileExtension)
     }
 
@@ -178,22 +195,23 @@ export class FileProcessor {
     this.log('Output written successfully')
   }
 
-  private getIgnoreRules(): Ignore {
+  private async getIgnoreRules(): Promise<Ignore> {
     this.log('Getting ignore rules')
+    const config = await this.configManager.getConfig()
     const globalIgnoreRules = vscode.workspace
       .getConfiguration('directory2file')
       .get('globalIgnoreRules', []) as string[]
 
     let ignoreRules = ignore().add(globalIgnoreRules)
 
-    const ignorePath = path.join(this.rootPath, this.config.ignoreFile)
+    const ignorePath = path.join(this.rootPath, config.ignoreFile)
     if (fs.existsSync(ignorePath)) {
       const ignoreContent = fs.readFileSync(ignorePath, 'utf8')
       const customRules = ignoreContent
         .split('\n')
         .filter((line) => line.trim() !== '' && !line.startsWith('#'))
       ignoreRules.add(customRules)
-      this.log(`Custom ignore rules added from: ${this.config.ignoreFile}`)
+      this.log(`Custom ignore rules added from: ${config.ignoreFile}`)
     }
 
     const defaultRules = [
@@ -210,13 +228,14 @@ export class FileProcessor {
     return ignoreRules
   }
 
-  private getIncludeRules(): string[] {
+  private async getIncludeRules(): Promise<string[]> {
     this.log('Getting include rules')
+    const config = await this.configManager.getConfig()
     const globalIncludeRules: string[] = vscode.workspace
       .getConfiguration('directory2file')
       .get('globalIncludeRules', [])
 
-    const includePath = path.join(this.rootPath, this.config.includeFile)
+    const includePath = path.join(this.rootPath, config.includeFile)
     let includeRules: string[] = [...globalIncludeRules]
 
     if (fs.existsSync(includePath)) {
@@ -226,7 +245,7 @@ export class FileProcessor {
         .filter((line) => line.trim() !== '')
         .map((pattern) => pattern.trim())
       includeRules = includeRules.concat(newRules)
-      this.log(`Custom include rules added from: ${this.config.includeFile}`)
+      this.log(`Custom include rules added from: ${config.includeFile}`)
     }
 
     return includeRules
@@ -323,7 +342,8 @@ export class FileProcessor {
   }
 
   private async ensureOutputPath(): Promise<string> {
-    const fullPath = path.join(this.rootPath, this.config.output)
+    const config = await this.configManager.getConfig()
+    const fullPath = path.join(this.rootPath, config.output)
     const outputDir = path.dirname(fullPath)
 
     if (!fs.existsSync(outputDir)) {
@@ -357,32 +377,37 @@ export class FileProcessor {
     const entries = await vscode.workspace.fs.readDirectory(
       vscode.Uri.file(dir)
     )
-    const sortedEntries = entries.sort(([a], [b]) => a.localeCompare(b))
+    const sortedEntries = this.sortEntries(entries)
 
     for (const [entry, type] of sortedEntries) {
       const fullPath = path.join(dir, entry)
       const relativePath = path.relative(this.rootPath, fullPath)
 
-      if (
-        this.ignoreRules.ignores(relativePath) &&
-        !this.shouldIncludeFile(relativePath)
-      ) {
-        continue
-      }
-
-      if (type === vscode.FileType.Directory) {
-        this.treeStructure.push(`${indent}${entry}/`)
-        await this.buildTreeStructure(fullPath, indent + '  ')
-      } else if (type === vscode.FileType.File) {
-        this.treeStructure.push(`${indent}${entry}`)
-        if (
-          this.includeRules.length === 0 ||
-          this.shouldIncludeFile(relativePath)
-        ) {
+      if (await this.shouldProcessFile(relativePath, false, false)) {
+        if (type === vscode.FileType.Directory) {
+          this.treeStructure.push(`${indent}${entry}/`)
+          await this.buildTreeStructure(fullPath, indent + '  ')
+        } else if (type === vscode.FileType.File) {
+          this.treeStructure.push(`${indent}${entry}`)
           this.filesToProcess.push(relativePath)
         }
       }
     }
+  }
+
+  sortEntries(
+    entries: [string, vscode.FileType][]
+  ): [string, vscode.FileType][] {
+    // This method doesn't need to be async as it doesn't use ignoreRules or includeRules
+    return entries.sort(([aName, aType], [bName, bType]) => {
+      if (aType === bType) {
+        return aName.localeCompare(bName, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      }
+      return aType === vscode.FileType.Directory ? -1 : 1
+    })
   }
 
   private log(message: string, isError: boolean = false): void {
