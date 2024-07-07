@@ -1,6 +1,6 @@
 # Export Directory to File
 
-[[Open in VSCode](vscode:extension/cogscides.directory2file)] - [🚧 WIP]
+[[Marketplace page](https://marketplace.visualstudio.com/items?itemName=cogscides.directory2file)] [[Open in VSCode](vscode:extension/cogscides.directory2file)] - [🚧 WIP]
 
 ## Description
 
