@@ -5,7 +5,7 @@ node_modules
 *.vsix
 .vscode*
 .export-ignore
-.export-whitelist
+.export-include
 export.md
 package-lock.json
 TODO.md

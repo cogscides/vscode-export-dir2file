@@ -60,7 +60,7 @@ Create an `exportconfig.json` file in the root of your workspace to configure th
 - `output`: Path to the output file (default is `export.md`).
 - `description`: String or Object with `main` and `activeTabs` properties for custom descriptions.
 - `ignoreFile`: Path to the file containing ignore patterns (default is `.export-ignore`).
-- `includeFile`: Path to the file containing include patterns (default is `.export-whitelist`).
+- `includeFile`: Path to the file containing include patterns (default is `.export-include`).
 - `maxFileSize`: Maximum file size in bytes to process (default is 1048576 or 1MB).
 - `removeComments`: Whether to remove comments from code files (default is `true`).
 - `includeProjectStructure`: Whether to include the project structure in the exported file (default is `true`).
