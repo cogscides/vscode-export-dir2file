@@ -4,9 +4,9 @@ All notable changes to the "export-dir2file" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [0.2.1] - Jul 7, 2024
+## [0.2.1] & [0.2.2] - Jul 7, 2024
 
-- Readme updated
+- Readme updates
 
 ## [0.2.0] - Jul 6, 2024
 
@@ -18,7 +18,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [0.1.2] - Jul 5, 2024
 
-- `description` property in `exportconfig.json` is not could be string or object with `main` and `activeTabs` keys descriptions for export files and active tabs commands
+- `description` property in `exportconfig.json` is now could be string or object with `main` and `activeTabs` keys descriptions for export files and active tabs commands
 - fix of description not exported on some commands
 
 ## [0.1.0] - Jul 2, 2024
