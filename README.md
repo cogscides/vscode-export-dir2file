@@ -30,8 +30,9 @@ This VSCode extension allows you to export all files in a directory to a single 
 
 The "Select Files to Export" command provides a user-friendly way to choose which files to include in your export. Here's how it looks:
 
-![image](https://github.com/cogscides/vscode-export-dir2file/assets/50235526/2fae55df-bf7f-445f-a0e9-d8bb0ce1843d)
+![image](./images/screen_select_files_export.png)
 
+https://github.com/cogscides/vscode-export-dir2file/assets/50235526/2fae55df-bf7f-445f-a0e9-d8bb0ce1843d
 
 This feature allows you to:
 
