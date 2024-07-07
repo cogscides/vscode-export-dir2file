@@ -2,7 +2,7 @@
   "name": "directory2file",
   "displayName": "Export Directory to File",
   "description": "Export files in a working directory to a single file with ignore and include rules, optionally including description, project structure and in language comments stripping.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "vscode": "^1.90.0"
   },
