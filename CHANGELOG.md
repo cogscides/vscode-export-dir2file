@@ -4,6 +4,10 @@ All notable changes to the "export-dir2file" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.4] - Juk 8, 2024
+
+- Catch errors when strip comments is not supported
+
 ## [0.2.3] - Jul 7, 2024
 
 - The tree structure and QuickPick are no longer affected by include rules.

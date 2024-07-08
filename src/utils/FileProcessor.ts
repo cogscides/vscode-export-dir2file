@@ -311,10 +311,14 @@ export class FileProcessor {
       ])
 
     if (supportedLanguages.includes(fileExtension.toLowerCase())) {
-      return stripComments(content, {
-        language: fileExtension,
-        preserveNewlines: true,
-      })
+      try {
+        return stripComments(content, {
+          language: fileExtension,
+          preserveNewlines: true,
+        })
+      } catch (error) {
+        this.log(`Failed to strip comments: ${error}`)
+      }
     }
 
     return content
