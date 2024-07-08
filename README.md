@@ -163,3 +163,8 @@ The extension's core functionality is implemented in the `FileProcessor` class. 
 ## Feedback and Contributions
 
 Feedback and contributions are welcome! Please open an issue on our GitHub repository if you encounter any problems or have suggestions for improvements.
+
+## Alternatives found
+
+- [aiformat](https://github.com/farouqaldori/aiformat) - CLI tool
+- [code2prompt](https://github.com/raphaelmansuy/code2prompt) - CLI tool
