@@ -99,7 +99,7 @@ docs/*.md
 - Specify exact filenames or use wildcards.
 - Use quotes for explicit filenames, e.g., `"extension.ts"` to include a specific file regardless of its location.
 
-When both ignore and include rules are present, the include rules take precedence. This means you can include specific files or directories that would otherwise be ignored.
+When both ignore and include rules are present, the include rules take precedence. This means you can include only specific files or directories that would otherwise be ignored.
 
 ## How It Works
 
@@ -155,7 +155,7 @@ The extension's core functionality is implemented in the `FileProcessor` class. 
 
 - Use the "Select Files to Export" command for more granular control over which files are included.
 - Regularly update your ignore and include files as your project structure changes.
-- Use explicit filenames in quotes (e.g., `"extension.ts"`) in the include file to ensure specific files are always included.
+- Use explicit filenames in quotes (e.g., `"extension.ts"`) in the include file to ensure only specific files are included.
 - Experiment with the `removeComments` option to reduce the size of your exported file.
 - Use the "Export only active tabs" feature for quick exports of your current work.
 - Global ignore rules can be set in VSCode settings, which apply to all projects.
