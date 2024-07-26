@@ -29,6 +29,7 @@ export class ConfigManager {
     let config: Config = {
       ignoreFile: '.export-ignore',
       includeFile: '.export-include',
+      includeProjectStructure: true,
       output: 'export.md',
       removeComments: false,
       allowIgnoredOnTabsExport: false,
